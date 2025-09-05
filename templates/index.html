@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terabox Video Player</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <h1>Terabox Video Player</h1>
+  <p>Paste your Terabox video link below to stream or download</p>
+</header>
+<main>
+  <form id="videoForm">
+    <label for="videoUrl">Terabox Video URL:</label>
+    <input type="url" id="videoUrl" placeholder="Enter Terabox video link" required />
+    <button type="submit">Play Video</button>
+  </form>
+  <div id="message"></div>
+  <video id="videoPlayer" controls preload="none" width="100%">
+    Your browser does not support the video tag.
+  </video>
+</main>
+<script>
+  document.getElementById('videoForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const urlInput = document.getElementById('videoUrl');
+    const videoPlayer = document.getElementById('videoPlayer');
+    const message = document.getElementById('message');
+    message.textContent = '';
+    videoPlayer.style.display = 'none';
+    videoPlayer.src = '';
+    const url = urlInput.value.trim();
+    if (!url) {
+      message.textContent = 'Please enter a Terabox video URL.';
+      return;
+    }
+    try {
+      const response = await fetch('/api/get_video_link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch video link');
+      }
+      const data = await response.json();
+      videoPlayer.src = data.video_url;
+      videoPlayer.style.display = 'block';
+      videoPlayer.play();
+    } catch (error) {
+      message.textContent = `Error: ${error.message}`;
+    }
+  });
+</script>
+</body>
+</html>
